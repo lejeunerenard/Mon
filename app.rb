@@ -42,11 +42,6 @@ enable :sessions
 set :port, 4560
 
 get '/' do
-  puts "Path: /"
-  puts "Session: "
-  puts session
-  puts "Params: "
-  puts params
   if session[:user_id]
     halt erb(:login) unless session[:user_id] == User.find(session[:user_id]).id
   else
@@ -61,8 +56,7 @@ get '/hack' do
 end
 
 post '/login' do
-  puts "Path: /login"
-  if (params[:user] == 'haxiom' and params[:password] == 'seanrules') or User.authenticate(params[:user], params[:password])
+  if User.authenticate(params[:user], params[:password])
     @user = User.find_by_user(params[:user]);
     session[:user_id] = @user.id;
     redirect '/'
@@ -73,12 +67,9 @@ post '/login' do
 end
 
 post '/door' do
-  puts "Path: POST /door"
-  if session[:user_id] or (params[:user] == 'haxiom' and params[:password] == 'seanrules') or User.authenticate(params[:name], params[:password])
+  if session[:user_id] or User.authenticate(params[:name], params[:password])
     if settings.xbee_wireless.zero?
       s = SerialPort.open("/dev/ttyAMA0", 9600)
-      pp "serial: "
-      pp s
       cmd_on = [0x7E,0x00,0x10,0x17,0x01,0x00,0x13,0xA2,0x00,0x40,0x89,0xDE,0xEE,0xFF,0xFF,0x02,0x44,0x33, 0x05, 0x21].pack('C*')
       cmd_off = [0x7E,0x00,0x10,0x17,0x01,0x00,0x13,0xA2,0x00,0x40,0x89,0xDE,0xEE,0xFF,0xFF,0x02,0x44,0x33, 0x04, 0x22].pack('C*')
       s.write(cmd_on)
@@ -96,18 +87,15 @@ post '/door' do
 end
 
 get '/logout' do
-  puts "Path: GET /logout"
   session[:user_id] = nil
   session.clear
   redirect '/'
 end
 
 delete '/users/:id' do
-  puts "Path: DELETE /users/:id"
 end
 
 post '/users' do
-  puts "Path: POST /users"
   @user = User.new(:user => params[:user])
   @user.password = params[:password]
   @user.save!
@@ -130,17 +118,14 @@ end
 
 # "Views"
 get '/users/add' do
-  puts "Path: GET /users"
   erb :user_add
 end
 
 get '/users/edit' do
-  puts "Path: GET /users"
   erb :user_add
 end
 
 get '/users/:id' do
-  puts "Path: GET /users"
   if params[:id]
     @user = User.find(params[:id])
     erb :user
